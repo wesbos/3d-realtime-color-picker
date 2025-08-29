@@ -1,0 +1,29 @@
+{
+  "name": "every-color",
+  "version": "0.0.1",
+  "main": "scripts.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Wes Bos (https://wesbos.com/)",
+  "license": "MIT",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "@types/culori": "^4.0.0",
+    "culori": "^4.0.1",
+    "delaunator": "^5.0.1",
+    "three": "^0.179.1",
+    "vite": "^7.1.3",
+    "partysocket": "^1.0.2"
+  },
+  "devDependencies": {
+    "partykit": "^0.0.111"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:party": "partykit dev",
+    "deploy:party": "partykit deploy"
+  }
+}
