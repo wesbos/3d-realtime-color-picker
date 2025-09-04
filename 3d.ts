@@ -567,7 +567,7 @@ class ColorPickerConnection {
 
     this.socket.addEventListener('close', () => {
       console.log('PartySocket disconnected');
-      // PERFORMANCE: Disabled automatic reconnection to prevent connection storms
+      // Disabled automatic reconnection to prevent connection storms
       // Previously caused infinite reconnection loops creating phantom user connections
       // setTimeout(() => this.connectToParty(partyHost), 1000);
     });
