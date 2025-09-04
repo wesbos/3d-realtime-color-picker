@@ -70,12 +70,13 @@ body {
   padding: 2px 4px;
   border-radius: 3px;
   white-space: nowrap;
-  opacity: 0;
+  opacity: 1;
   transition: opacity 0.2s ease;
 }
 
 .user-color-circle:hover::after {
   opacity: 1;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 #colorDisplay {

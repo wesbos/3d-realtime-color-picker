@@ -15,6 +15,7 @@ class RGBCubeVisualizer extends EventTarget {
   private remoteCursors = new Map<string, THREE.Mesh>();
   private userColorCircles = new Map<string, HTMLElement>();
   private isCameraMoving = false;
+  private currentUserSessionId: string | null = null;
 
   constructor(canvas: HTMLCanvasElement, colorDisplay?: HTMLElement) {
     super();
@@ -123,7 +124,6 @@ class RGBCubeVisualizer extends EventTarget {
     const material = new THREE.MeshBasicMaterial({
       vertexColors: true,
       side: THREE.DoubleSide,
-      flatShading: true, // Reduces color bleeding between faces
       transparent: false,
       opacity: 1.0
     });
@@ -208,6 +208,9 @@ class RGBCubeVisualizer extends EventTarget {
 
         // Update cursor color to match the hovered color
         (this.cursorIndicator.material as THREE.MeshBasicMaterial).color.setStyle(hexColor);
+
+        // Update current user's color circle
+        this.updateCurrentUserColor(hexColor);
 
         // Emit color pick event
         this.dispatchEvent(new CustomEvent('colorpick', {
@@ -339,9 +342,19 @@ class RGBCubeVisualizer extends EventTarget {
   }
 
   // Public methods for external WebSocket handling
+  setCurrentUserSessionId(sessionId: string): void {
+    this.currentUserSessionId = sessionId;
+  }
+
   showRemoteCursor(sessionId: string, position: any, normal: any, color: string): void {
     this.updateRemoteCursor(sessionId, position, normal, color);
     this.updateUserColorCircle(sessionId, color);
+  }
+
+  updateCurrentUserColor(color: string): void {
+    if (this.currentUserSessionId) {
+      this.updateUserColorCircle(this.currentUserSessionId, color, true);
+    }
   }
 
   hideRemoteCursor(sessionId: string): void {
@@ -425,14 +438,17 @@ class RGBCubeVisualizer extends EventTarget {
     }
   }
 
-  private updateUserColorCircle(sessionId: string, color: string): void {
+  private updateUserColorCircle(sessionId: string, color: string, isCurrentUser: boolean = false): void {
     let circle = this.userColorCircles.get(sessionId);
 
     if (!circle) {
       // Create new color circle
       circle = document.createElement('div');
       circle.className = 'user-color-circle';
-      circle.setAttribute('data-user-id', `User ${sessionId.slice(-4)}`);
+
+      // Set user name with "(you!)" indicator for current user
+      const userName = isCurrentUser ? `User ${sessionId.slice(-4)} (you!)` : `User ${sessionId.slice(-4)}`;
+      circle.setAttribute('data-user-id', userName);
 
       const userColorsContainer = document.getElementById('userColors');
       if (userColorsContainer) {
@@ -554,6 +570,14 @@ class ColorPickerConnection {
       host: window.location.host,
       party: "color-picker-server",
       room: 'color-picker'
+    });
+
+    this.socket.addEventListener('open', () => {
+      console.log('PartySocket connected');
+      // Set the current user session ID when connected
+      if (this.socket.id) {
+        this.colorPicker.setCurrentUserSessionId(this.socket.id);
+      }
     });
 
     this.socket.addEventListener('message', (event: MessageEvent) => {

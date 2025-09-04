@@ -1,0 +1,13 @@
+## Code Completion Response Style
+
+When finishing a coding task or making changes:
+- Keep responses brief and to-the-point
+- No lengthy summaries or explanations unless specifically requested
+- Simply confirm what was done and move on
+- Avoid verbose "here's what I implemented" sections
+- Let the code speak for itself
+
+Exception: Provide detailed explanations only when:
+- User explicitly asks for explanation
+- Changes are complex and need clarification
+- There are important caveats or next steps

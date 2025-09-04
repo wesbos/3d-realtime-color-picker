@@ -10,6 +10,7 @@
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.12.2",
     "@types/culori": "^4.0.0",
+    "@types/three": "^0.180.0",
     "culori": "^4.0.1",
     "delaunator": "^5.0.1",
     "partyserver": "^0.0.73",
