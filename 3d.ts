@@ -55,8 +55,8 @@ class RGBCubeVisualizer extends EventTarget {
 
     // Controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = false;
-    this.controls.dampingFactor = 0.05;
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.1;
 
     // Set zoom limits to prevent going inside the cube
     // Cube extends ±0.5, so we can get much closer now with the fixed near plane
@@ -151,7 +151,7 @@ class RGBCubeVisualizer extends EventTarget {
 
       // Skip color display updates during camera movement to prevent picker circle jumping
       if (this.isCameraMoving) return;
-      
+
       this.updateColorDisplay();
     });
 
@@ -457,7 +457,7 @@ class RGBCubeVisualizer extends EventTarget {
   private setupCameraSync(): void {
     let lastCameraUpdate = 0;
     /*
-      
+
     - 1 second = 1000 milliseconds
     - 1000ms ÷ 16ms = 62.5 updates per second ~60 FPS
 
@@ -467,7 +467,7 @@ class RGBCubeVisualizer extends EventTarget {
     - 33ms = 30 FPS
     - 50ms = 20 FPS
     */
-    
+
     // Provides smoother real-time camera synchronization between windows
     const CAMERA_UPDATE_THROTTLE = 16; // ms - 60fps for smooth camera sync
 
