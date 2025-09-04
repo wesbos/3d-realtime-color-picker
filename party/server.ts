@@ -1,23 +1,23 @@
-import type * as Party from "partykit/server";
+import { routePartykitRequest, Server, type Connection, } from "partyserver";
 
-export default class ColorPickerServer implements Party.Server {
-  constructor(readonly room: Party.Room) {}
+export class ColorPickerServer extends Server {
+  // constructor(readonly room: Party.Room) {}
 
-  onConnect(conn: Party.Connection) {
+  onConnect(conn: Connection) {
     console.log(`User ${conn.id} connected`);
 
     // Send current user count to all connections
     this.broadcastUserCount();
   }
 
-  onMessage(message: string | ArrayBuffer, sender: Party.Connection) {
+  async onMessage(sender: Connection, message: string | ArrayBuffer) {
     try {
       const data = JSON.parse(message as string);
 
       switch (data.type) {
         case 'cursor-move':
           // Broadcast cursor position to all other connections
-          this.room.broadcast(JSON.stringify({
+          this.broadcast(JSON.stringify({
             type: 'cursor-move',
             sessionId: sender.id,
             position: data.position,
@@ -29,7 +29,7 @@ export default class ColorPickerServer implements Party.Server {
 
         case 'cursor-leave':
           // Broadcast cursor leave to all other connections
-          this.room.broadcast(JSON.stringify({
+          this.broadcast(JSON.stringify({
             type: 'cursor-leave',
             sessionId: sender.id
           }), [sender.id]); // Exclude sender
@@ -37,7 +37,7 @@ export default class ColorPickerServer implements Party.Server {
 
         case 'camera-sync':
           // Broadcast camera changes to all other connections
-          this.room.broadcast(JSON.stringify({
+          this.broadcast(JSON.stringify({
             type: 'camera-sync',
             camera: data.camera
           }), [sender.id]); // Exclude sender
@@ -48,11 +48,11 @@ export default class ColorPickerServer implements Party.Server {
     }
   }
 
-  onClose(connection: Party.Connection) {
+  onClose(connection: Connection) {
     console.log(`User ${connection.id} disconnected`);
 
     // Send user disconnect event (removes color circle)
-    this.room.broadcast(JSON.stringify({
+    this.broadcast(JSON.stringify({
       type: 'user-disconnect',
       sessionId: connection.id
     }));
@@ -62,10 +62,23 @@ export default class ColorPickerServer implements Party.Server {
   }
 
   private broadcastUserCount() {
-    const userCount = [...this.room.connections].length;
-    this.room.broadcast(JSON.stringify({
+    const connections = Array.from(this.getConnections());
+    // const userCount = [...this.room.connections].length;
+    const userCount = connections.length;
+    this.broadcast(JSON.stringify({
       type: 'user-count',
       count: userCount
     }));
   }
 }
+
+
+export default {
+  // Set up your fetch handler to use configured Servers
+  async fetch(request: Request, env: any) {
+    const response = await routePartykitRequest(request, env, {
+      // prefix: 'party/parties'
+    });
+    return response || new Response("Not Found", { status: 404 });
+  }
+};

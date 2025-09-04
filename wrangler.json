@@ -1,0 +1,26 @@
+{
+  "name": "every-color",
+  "main": "party/server.ts",
+  "compatibility_date": "2025-05-08",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env"
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ColorPickerServer",
+        "class_name": "ColorPickerServer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ColorPickerServer"]
+    }
+  ],
+  "dev": {
+    "port": 1999
+  }
+}

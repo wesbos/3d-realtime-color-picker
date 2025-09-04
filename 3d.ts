@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { PartySocket } from 'partysocket';
 
 class RGBCubeVisualizer extends EventTarget {
   private scene: THREE.Scene;
@@ -530,13 +531,11 @@ class ColorPickerConnection {
   }
 
   private async connectToParty(partyHost?: string): Promise<void> {
-    // Dynamic import for PartySocket
-    const { default: PartySocket } = await import('partysocket');
-
     const host = partyHost || 'localhost:1999'; // Default PartyKit dev server
 
     this.socket = new PartySocket({
       host,
+      party: "color-picker-server",
       room: 'color-picker'
     });
 

@@ -148,33 +148,14 @@ body::before {
   font-family: "Courier New", monospace;
 }
 
-.info::before {
-  content: "RGB Color Cube Visualization\AClick and drag to rotate • Scroll to zoom\AX-axis: Red (0-1) • Y-axis: Green (0-1) • Z-axis: Blue (0-1)";
-  white-space: pre-line;
-}
+
 
 /* Error state */
 body.error::before {
-  content: "Failed to load 3D visualization. Please refresh the page.";
   color: #ff6b6b;
   animation: none;
 }
 
-/* Performance warning for low-end devices */
-@media (max-width: 768px) {
-  body::after {
-    content: "For better performance on mobile, try rotating your device to landscape mode.";
-    position: fixed;
-    bottom: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 11px;
-    text-align: center;
-    z-index: 1000;
-    pointer-events: none;
-    max-width: 90vw;
-  }
 }
 
 /* High DPI display optimizations */
