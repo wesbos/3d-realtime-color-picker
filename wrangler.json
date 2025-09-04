@@ -20,6 +20,7 @@
       "new_sqlite_classes": ["ColorPickerServer"]
     }
   ],
+  "assets": { "not_found_handling": "single-page-application" },
   "dev": {
     "port": 1999
   }

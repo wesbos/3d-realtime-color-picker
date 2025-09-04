@@ -55,7 +55,7 @@ class RGBCubeVisualizer extends EventTarget {
 
     // Controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
+    this.controls.enableDamping = false;
     this.controls.dampingFactor = 0.05;
 
     // Set zoom limits to prevent going inside the cube
@@ -347,7 +347,7 @@ class RGBCubeVisualizer extends EventTarget {
     syncCamera(cameraData: any): void {
     if (!this.isReceivingCameraUpdate) {
       this.isReceivingCameraUpdate = true;
-
+      // turn on damping
       // Update camera position directly
       this.camera.position.set(cameraData.position.x, cameraData.position.y, cameraData.position.z);
 
@@ -450,7 +450,7 @@ class RGBCubeVisualizer extends EventTarget {
 
   private setupCameraSync(): void {
     let lastCameraUpdate = 0;
-    const CAMERA_UPDATE_THROTTLE = 1; // ms - more frequent updates
+    const CAMERA_UPDATE_THROTTLE = 10; // ms - more frequent updates
 
     this.controls.addEventListener('change', () => {
       if (this.isReceivingCameraUpdate) return;
@@ -534,7 +534,7 @@ class ColorPickerConnection {
     const host = partyHost || 'localhost:1999'; // Default PartyKit dev server
 
     this.socket = new PartySocket({
-      host,
+      host: window.location.host,
       party: "color-picker-server",
       room: 'color-picker'
     });
