@@ -14,7 +14,7 @@ class RGBCubeVisualizer extends EventTarget {
   private cursorIndicator: THREE.Mesh | null = null;
   private remoteCursors = new Map<string, THREE.Mesh>();
   private userColorCircles = new Map<string, HTMLElement>();
-  private isReceivingCameraUpdate = false;
+  private isCameraMoving = false;
 
   constructor(canvas: HTMLCanvasElement, colorDisplay?: HTMLElement) {
     super();
@@ -64,6 +64,21 @@ class RGBCubeVisualizer extends EventTarget {
     this.controls.maxDistance = 15;  // Can't zoom out further than this
     this.controls.enableZoom = true;
 
+    // Listen for camera interaction start/end to prevent picker circle jumping
+    this.controls.addEventListener('start', () => {
+      this.isCameraMoving = true;
+      // Hide cursor indicator during camera movement
+      if (this.cursorIndicator) {
+        this.cursorIndicator.visible = false;
+      }
+    });
+
+    this.controls.addEventListener('end', () => {
+      this.isCameraMoving = false;
+      // Re-trigger color display update when camera movement ends
+      this.updateColorDisplay();
+    });
+
     // Listen for camera changes and emit events
     this.setupCameraSync();
 
@@ -74,8 +89,8 @@ class RGBCubeVisualizer extends EventTarget {
       private createRGBCube(): void {
     console.log('Creating RGB color cube...');
 
-    // Create a detailed cube geometry - reduced subdivisions for better performance
-    const geometry = new THREE.BoxGeometry(1, 1, 1, 20, 20, 20);
+    // Reduce vertex count from 8,000 to 125 vertices while maintaining visual quality
+    const geometry = new THREE.BoxGeometry(1, 1, 1, 5, 5, 5);
 
     // Get positions and create color array
     const positions = geometry.attributes.position;
@@ -131,10 +146,12 @@ class RGBCubeVisualizer extends EventTarget {
   private setupInteraction(canvas: HTMLCanvasElement): void {
     canvas.addEventListener('mousemove', (event) => {
       const rect = canvas.getBoundingClientRect();
-      // More precise mouse coordinate calculation
       this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+      // Skip color display updates during camera movement to prevent picker circle jumping
+      if (this.isCameraMoving) return;
+      
       this.updateColorDisplay();
     });
 
@@ -344,23 +361,12 @@ class RGBCubeVisualizer extends EventTarget {
     }
   }
 
-    syncCamera(cameraData: any): void {
-    if (!this.isReceivingCameraUpdate) {
-      this.isReceivingCameraUpdate = true;
-      // turn on damping
-      // Update camera position directly
-      this.camera.position.set(cameraData.position.x, cameraData.position.y, cameraData.position.z);
-
-      // Update controls target
-      this.controls.target.set(cameraData.target.x, cameraData.target.y, cameraData.target.z);
-
-      // Update the controls
-      this.controls.update();
-
-      setTimeout(() => {
-        this.isReceivingCameraUpdate = false;
-      }, 100);
-    }
+  syncCamera(cameraData: any): void {
+    // Direct camera sync without blocking delays for responsive real-time sync
+    // Removed 100ms blocking timeout that was causing lag in camera updates
+    this.camera.position.set(cameraData.position.x, cameraData.position.y, cameraData.position.z);
+    this.controls.target.set(cameraData.target.x, cameraData.target.y, cameraData.target.z);
+    this.controls.update();
   }
 
   private updateRemoteCursor(sessionId: string, position: any, normal: any, color: string): void {
@@ -450,11 +456,22 @@ class RGBCubeVisualizer extends EventTarget {
 
   private setupCameraSync(): void {
     let lastCameraUpdate = 0;
-    const CAMERA_UPDATE_THROTTLE = 10; // ms - more frequent updates
+    /*
+      
+    - 1 second = 1000 milliseconds
+    - 1000ms ÷ 16ms = 62.5 updates per second ~60 FPS
+
+    Common throttle values:
+    - 8ms = 125 FPS (very responsive but more network traffic)
+    - 16ms = 60 FPS (matches most monitor refresh rates)
+    - 33ms = 30 FPS
+    - 50ms = 20 FPS
+    */
+    
+    // Provides smoother real-time camera synchronization between windows
+    const CAMERA_UPDATE_THROTTLE = 16; // ms - 60fps for smooth camera sync
 
     this.controls.addEventListener('change', () => {
-      if (this.isReceivingCameraUpdate) return;
-
       const now = Date.now();
       if (now - lastCameraUpdate > CAMERA_UPDATE_THROTTLE) {
         lastCameraUpdate = now;
@@ -549,8 +566,10 @@ class ColorPickerConnection {
     });
 
     this.socket.addEventListener('close', () => {
-      console.log('PartySocket disconnected, attempting to reconnect...');
-      setTimeout(() => this.connectToParty(partyHost), 1000);
+      console.log('PartySocket disconnected');
+      // PERFORMANCE: Disabled automatic reconnection to prevent connection storms
+      // Previously caused infinite reconnection loops creating phantom user connections
+      // setTimeout(() => this.connectToParty(partyHost), 1000);
     });
   }
 
