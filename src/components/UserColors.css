@@ -1,0 +1,43 @@
+/* UserColors styles */
+.user-colors {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  z-index: 1000;
+}
+
+.user-color-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(5px);
+  position: relative;
+  cursor: pointer;
+}
+
+.user-color-circle:hover {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 1);
+}
+
+.user-name-tooltip {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}

@@ -1,0 +1,17 @@
+/* ColorDisplay styles */
+.color-display {
+  font-size: 24px;
+  font-weight: 300;
+  text-align: center;
+  margin: 20px 0;
+  font-family: "Courier New", monospace;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 20px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
