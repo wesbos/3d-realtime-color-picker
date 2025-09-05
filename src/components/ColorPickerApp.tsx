@@ -4,6 +4,7 @@ import { UserCount } from './UserCount'
 import { UserColors } from './UserColors'
 import { ColorDisplay } from './ColorDisplay'
 import { usePartyConnection } from '../hooks/usePartyConnection'
+import './ColorPickerApp.css'
 
 export function ColorPickerApp() {
   const [userCount, setUserCount] = useState(0)
@@ -17,15 +18,17 @@ export function ColorPickerApp() {
   const visualizerRef = useRef<RGBCubeVisualizerHandle>(null)
 
   // PartyKit connection callbacks
-  const handleCursorMove = useCallback((sessionId: string, position: any, normal: any, color: string) => {
-    visualizerRef.current?.showRemoteCursor(sessionId, position, normal, color)
-
-    // Update user color
+  const handleUserJoined = useCallback((sessionId: string, color: string) => {
+    // Add user to the user colors list immediately when they join
     setUserColors(prev => {
       const newMap = new Map(prev)
       newMap.set(sessionId, color)
       return newMap
     })
+  }, [])
+
+  const handleCursorMove = useCallback((sessionId: string, position: any, normal: any, color: string) => {
+    visualizerRef.current?.showRemoteCursor(sessionId, position, normal, color)
   }, [])
 
   const handleCursorLeave = useCallback((sessionId: string) => {
@@ -51,19 +54,31 @@ export function ColorPickerApp() {
     setUserCount(count)
   }, [])
 
+  const handleUserColorChange = useCallback((sessionId: string, color: string) => {
+    // Update user's color in the userColors map
+    setUserColors(prev => {
+      const newMap = new Map(prev)
+      newMap.set(sessionId, color)
+      return newMap
+    })
+  }, [])
+
   // Use PartyKit connection
   const {
     isConnected,
     userSessionId,
     sendColorPick,
     sendCursorLeave,
-    sendCameraChange
+    sendCameraChange,
+    sendColorChange
   } = usePartyConnection({
     onCursorMove: handleCursorMove,
     onCursorLeave: handleCursorLeave,
+    onUserJoined: handleUserJoined,
     onUserDisconnect: handleUserDisconnect,
     onCameraSync: handleCameraSync,
-    onUserCountUpdate: handleUserCountUpdate
+    onUserCountUpdate: handleUserCountUpdate,
+    onUserColorChange: handleUserColorChange
   })
 
   // Visualizer callbacks
@@ -74,16 +89,9 @@ export function ColorPickerApp() {
     rgb: { r: number; g: number; b: number }
   }) => {
     sendColorPick(event)
-
-    // Update current user's color
-    if (userSessionId) {
-      setUserColors(prev => {
-        const newMap = new Map(prev)
-        newMap.set(userSessionId, event.color)
-        return newMap
-      })
-    }
-  }, [sendColorPick, userSessionId])
+    // Send color change to update user's color
+    sendColorChange(event.color)
+  }, [sendColorPick, sendColorChange])
 
   const handleColorDisplay = useCallback((colorText: string, backgroundColor: string, textColor: string) => {
     setColorDisplay({ text: colorText, backgroundColor, textColor })
@@ -97,18 +105,7 @@ export function ColorPickerApp() {
   }, [sendCameraChange])
 
   return (
-    <div style={{
-      margin: 0,
-      padding: 0,
-      background: 'radial-gradient(circle at center, #1a1a1a 0%, #000000 100%)',
-      overflow: 'hidden',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}>
+    <div className="color-picker-app">
       <UserCount count={userCount} isConnecting={!isConnected} />
       <UserColors userColors={userColors} currentUserSessionId={userSessionId} />
 
@@ -130,58 +127,10 @@ export function ColorPickerApp() {
       />
 
       {/* Loading indicator */}
-      <div style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: '16px',
-        fontWeight: 300,
-        textAlign: 'center',
-        zIndex: 1000,
-        pointerEvents: 'none',
-        animation: 'pulse 2s ease-in-out infinite',
-        display: colorDisplay.text ? 'none' : 'block'
-      }}>
-        Generating RGB Color Cube...
+      <div className={`loading-indicator ${colorDisplay.text ? 'hidden' : ''}`}>
+
       </div>
 
-      <style>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        body {
-          margin: 0;
-          padding: 0;
-          background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-          overflow: hidden;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        #canvas:active {
-          cursor: grabbing;
-        }
-
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 0.4;
-          }
-          50% {
-            opacity: 1;
-          }
-        }
-
-        /* High DPI display optimizations */
-        @media (-webkit-min-device-pixel-ratio: 2) {
-          #canvas {
-            image-rendering: -webkit-optimize-contrast;
-          }
-        }
-      `}</style>
     </div>
   )
 }

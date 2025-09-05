@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import './RGBCubeVisualizer.css'
 
 interface RGBCubeVisualizerProps {
   onColorPick?: (event: {
@@ -110,21 +111,40 @@ export const RGBCubeVisualizer = forwardRef<RGBCubeVisualizerHandle, RGBCubeVisu
     raycasterRef.current = new THREE.Raycaster()
     mouseRef.current = new THREE.Vector2()
 
-    // Handle resize
+    // Handle resize using ResizeObserver to watch the canvas element directly
     const handleResize = () => {
-      if (!camera || !renderer || !canvas) return
+      if (!cameraRef.current || !rendererRef.current || !canvas) return
       const rect = canvas.getBoundingClientRect()
       const width = rect.width
       const height = rect.height
 
-      camera.aspect = width / height
-      camera.updateProjectionMatrix()
-      renderer.setSize(width, height, false)
+      cameraRef.current.aspect = width / height
+      cameraRef.current.updateProjectionMatrix()
+      rendererRef.current.setSize(width, height, false)
     }
+
+    // Use ResizeObserver to watch the canvas element itself
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (cameraRef.current && rendererRef.current) {
+          cameraRef.current.aspect = width / height
+          cameraRef.current.updateProjectionMatrix()
+          rendererRef.current.setSize(width, height, false)
+        }
+      }
+    })
+    resizeObserver.observe(canvas)
+
+    // Also keep window resize as fallback
     window.addEventListener('resize', handleResize)
+
+    // Call resize immediately to ensure proper initial sizing
+    handleResize()
 
     return () => {
       window.removeEventListener('resize', handleResize)
+      resizeObserver.disconnect()
     }
   }, [])
 
@@ -171,8 +191,7 @@ export const RGBCubeVisualizer = forwardRef<RGBCubeVisualizerHandle, RGBCubeVisu
     sceneRef.current.add(cube)
     cubeRef.current = cube
 
-    // Add helpers and interactive elements
-    addHelpers()
+    // Add interactive elements
     addCubeEdges()
     createCursorIndicator()
 
@@ -200,63 +219,8 @@ export const RGBCubeVisualizer = forwardRef<RGBCubeVisualizerHandle, RGBCubeVisu
     const wireframe = new THREE.LineSegments(edgeGeometry, edgeMaterial)
     sceneRef.current.add(wireframe)
 
-    addFaceGridLines()
   }, [])
 
-  const addFaceGridLines = useCallback(() => {
-    if (!sceneRef.current) return
-
-    const gridLines = new THREE.Group()
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.1
-    })
-
-    // Create grid lines for each face (every 0.2 units)
-    for (let i = -0.4; i <= 0.4; i += 0.2) {
-      // Vertical lines on front and back faces
-      const frontVertical = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(i, -0.5, 0.5),
-        new THREE.Vector3(i, 0.5, 0.5)
-      ])
-      gridLines.add(new THREE.Line(frontVertical, lineMaterial))
-
-      const backVertical = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(i, -0.5, -0.5),
-        new THREE.Vector3(i, 0.5, -0.5)
-      ])
-      gridLines.add(new THREE.Line(backVertical, lineMaterial))
-
-      // Horizontal lines on front and back faces
-      const frontHorizontal = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.5, i, 0.5),
-        new THREE.Vector3(0.5, i, 0.5)
-      ])
-      gridLines.add(new THREE.Line(frontHorizontal, lineMaterial))
-
-      const backHorizontal = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.5, i, -0.5),
-        new THREE.Vector3(0.5, i, -0.5)
-      ])
-      gridLines.add(new THREE.Line(backHorizontal, lineMaterial))
-
-      // Lines on left and right faces
-      const leftVertical = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-0.5, i, -0.5),
-        new THREE.Vector3(-0.5, i, 0.5)
-      ])
-      gridLines.add(new THREE.Line(leftVertical, lineMaterial))
-
-      const rightVertical = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0.5, i, -0.5),
-        new THREE.Vector3(0.5, i, 0.5)
-      ])
-      gridLines.add(new THREE.Line(rightVertical, lineMaterial))
-    }
-
-    sceneRef.current.add(gridLines)
-  }, [])
 
   const createCursorIndicator = useCallback(() => {
     if (!sceneRef.current) return
@@ -546,14 +510,7 @@ export const RGBCubeVisualizer = forwardRef<RGBCubeVisualizerHandle, RGBCubeVisu
     <canvas
       ref={canvasRef}
       id="canvas"
-      style={{
-        display: 'block',
-        width: '80vmin',
-        height: '80vmin',
-        cursor: 'crosshair',
-        touchAction: 'none',
-        flexShrink: 0
-      }}
+      className="rgb-cube-canvas"
     />
   )
 })

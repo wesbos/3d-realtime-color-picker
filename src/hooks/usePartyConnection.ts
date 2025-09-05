@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { usePartySocket } from 'partysocket/react'
 
 interface ColorPickEvent {
@@ -14,8 +14,9 @@ interface CameraChangeEvent {
 }
 
 interface PartyMessage {
-  type: 'cursor-move' | 'cursor-leave' | 'user-disconnect' | 'camera-sync' | 'user-count'
+  type: 'cursor-move' | 'cursor-leave' | 'user-disconnect' | 'camera-sync' | 'user-count' | 'user-joined' | 'user-color-change' | 'user-identified' | 'identify'
   sessionId?: string
+  persistentUserId?: string
   position?: any
   normal?: any
   color?: string
@@ -26,22 +27,37 @@ interface PartyMessage {
 interface UsePartyConnectionOptions {
   onCursorMove?: (sessionId: string, position: any, normal: any, color: string) => void
   onCursorLeave?: (sessionId: string) => void
+  onUserJoined?: (sessionId: string, color: string) => void
   onUserDisconnect?: (sessionId: string) => void
   onCameraSync?: (camera: any) => void
   onUserCountUpdate?: (count: number) => void
+  onUserColorChange?: (sessionId: string, color: string) => void
   partyHost?: string
 }
 
 export function usePartyConnection({
   onCursorMove,
   onCursorLeave,
+  onUserJoined,
   onUserDisconnect,
   onCameraSync,
   onUserCountUpdate,
+  onUserColorChange,
   partyHost
 }: UsePartyConnectionOptions) {
   const [isConnected, setIsConnected] = useState(false)
   const [userSessionId, setUserSessionId] = useState<string | null>(null)
+
+  // Get or create persistent user ID
+  const getPersistentUserId = useCallback(() => {
+    const stored = localStorage.getItem('color-picker-user-id')
+    if (stored) {
+      return stored
+    }
+    const newId = crypto.randomUUID()
+    localStorage.setItem('color-picker-user-id', newId)
+    return newId
+  }, [])
 
   const handleMessage = useCallback((event: MessageEvent) => {
     try {
@@ -56,6 +72,11 @@ export function usePartyConnection({
         case 'cursor-leave':
           if (data.sessionId && onCursorLeave) {
             onCursorLeave(data.sessionId)
+          }
+          break
+        case 'user-joined':
+          if (data.sessionId && data.color && onUserJoined) {
+            onUserJoined(data.sessionId, data.color)
           }
           break
         case 'user-disconnect':
@@ -73,11 +94,21 @@ export function usePartyConnection({
             onUserCountUpdate(data.count)
           }
           break
+        case 'user-color-change':
+          if (data.sessionId && data.color && onUserColorChange) {
+            onUserColorChange(data.sessionId, data.color)
+          }
+          break
+        case 'user-identified':
+          if (data.sessionId) {
+            setUserSessionId(data.sessionId)
+          }
+          break
       }
     } catch (error) {
       console.error('Invalid message format:', error)
     }
-  }, [onCursorMove, onCursorLeave, onUserDisconnect, onCameraSync, onUserCountUpdate])
+  }, [onCursorMove, onCursorLeave, onUserJoined, onUserDisconnect, onCameraSync, onUserCountUpdate, onUserColorChange])
 
   const handleOpen = useCallback(() => {
     console.log('PartySocket connected')
@@ -100,10 +131,16 @@ export function usePartyConnection({
     onMessage: handleMessage,
   })
 
-  // Set user session ID when socket is available
-  if (socket && socket.id && userSessionId !== socket.id) {
-    setUserSessionId(socket.id)
-  }
+  // Send identify message when socket becomes available
+  useEffect(() => {
+    if (socket && socket.readyState === WebSocket.OPEN && isConnected) {
+      const persistentId = getPersistentUserId()
+      socket.send(JSON.stringify({
+        type: 'identify',
+        persistentUserId: persistentId
+      }))
+    }
+  }, [socket, isConnected, getPersistentUserId])
 
   const sendColorPick = useCallback((event: ColorPickEvent) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -134,12 +171,22 @@ export function usePartyConnection({
     }
   }, [socket])
 
+  const sendColorChange = useCallback((color: string) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: 'user-color-change',
+        color: color
+      }))
+    }
+  }, [socket])
+
   return {
     isConnected,
     userSessionId,
     sendColorPick,
     sendCursorLeave,
-    sendCameraChange
+    sendCameraChange,
+    sendColorChange
   }
 }
 

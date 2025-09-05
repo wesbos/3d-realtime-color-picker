@@ -10,7 +10,6 @@
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.12.2",
     "@tanstack/react-router": "^1.131.35",
-    "@tanstack/router-devtools": "^1.131.35",
     "@types/culori": "^4.0.0",
     "@types/three": "^0.180.0",
     "@vitejs/plugin-react": "^5.0.2",

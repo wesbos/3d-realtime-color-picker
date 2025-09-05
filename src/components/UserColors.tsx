@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import './UserColors.css'
 
 interface UserColor {
   sessionId: string
@@ -32,15 +33,7 @@ export function UserColors({ userColors, currentUserSessionId }: UserColorsProps
   return (
     <div
       id="userColors"
-      style={{
-        position: 'fixed',
-        top: '20px',
-        left: '20px',
-        display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap',
-        zIndex: 1000
-      }}
+      className="user-colors"
     >
       {userColorArray.map(({ sessionId, color, isCurrentUser }) => (
         <UserColorCircle
@@ -67,45 +60,9 @@ function UserColorCircle({ sessionId, color, isCurrentUser }: UserColorCirclePro
     <div
       className="user-color-circle"
       data-user-id={userName}
-      style={{
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
-        border: '3px solid rgba(255, 255, 255, 0.8)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-        transition: 'all 0.2s ease',
-        backdropFilter: 'blur(5px)',
-        position: 'relative',
-        cursor: 'pointer',
-        backgroundColor: color
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'scale(1.1)'
-        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 1)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)'
-        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.8)'
-      }}
+      style={{ backgroundColor: color }}
     >
-      <div
-        style={{
-          content: `"${userName}"`,
-          position: 'absolute',
-          bottom: '-20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: '10px',
-          color: 'rgba(255, 255, 255, 0.7)',
-          background: 'rgba(0, 0, 0, 0.5)',
-          padding: '2px 4px',
-          borderRadius: '3px',
-          whiteSpace: 'nowrap',
-          opacity: 1,
-          transition: 'opacity 0.2s ease',
-          pointerEvents: 'none'
-        }}
-      >
+      <div className="user-name-tooltip">
         {userName}
       </div>
     </div>

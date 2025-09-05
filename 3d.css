@@ -109,23 +109,6 @@ body {
 #canvas:active {
   cursor: grabbing;
 }
-
-/* Loading indicator */
-body::before {
-  content: "Generating RGB Color Cube...";
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 16px;
-  font-weight: 300;
-  text-align: center;
-  z-index: 1000;
-  pointer-events: none;
-  animation: pulse 2s ease-in-out infinite;
-}
-
 @keyframes pulse {
   0%,
   100% {
